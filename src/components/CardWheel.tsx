@@ -16,6 +16,11 @@ const VISIBLE_RADIUS = 2
 const CARD_STEP_REM = 9.75
 const TILT_DEG = 38
 
+function scrollBehavior(): ScrollBehavior {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'smooth'
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+}
+
 const styles: Record<string, CSSProperties> = {
   wheel: {
     position: 'absolute',
@@ -84,7 +89,7 @@ export function CardWheel({ cases, onSelect, focusCaseId }: CardWheelProps) {
 
     focusedCaseRef.current = focusCaseId
     setActiveIndex(index)
-    spacerRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    spacerRefs.current[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
   }, [cases, focusCaseId])
 
   useEffect(() => {
@@ -119,7 +124,7 @@ export function CardWheel({ cases, onSelect, focusCaseId }: CardWheelProps) {
   }, [cases])
 
   function goTo(index: number) {
-    spacerRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    spacerRefs.current[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
   }
 
   return (

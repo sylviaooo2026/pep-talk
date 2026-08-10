@@ -49,74 +49,44 @@ export function useCases(): UseCasesResult {
 
   const create = useCallback(
     async (input: CaseInput) => {
-      try {
-        const created = await repo.create(input)
-        await refresh()
-        return created
-      } catch (cause) {
-        setError(errorMessage(cause))
-        throw cause
-      }
+      const created = await repo.create(input)
+      await refresh()
+      return created
     },
     [refresh, repo],
   )
 
   const update = useCallback(
     async (id: string, input: CaseInput) => {
-      try {
-        const updated = await repo.update(id, input)
-        await refresh()
-        return updated
-      } catch (cause) {
-        setError(errorMessage(cause))
-        throw cause
-      }
+      const updated = await repo.update(id, input)
+      await refresh()
+      return updated
     },
     [refresh, repo],
   )
 
   const remove = useCallback(
     async (id: string) => {
-      try {
-        await repo.remove(id)
-        await refresh()
-      } catch (cause) {
-        setError(errorMessage(cause))
-        throw cause
-      }
+      await repo.remove(id)
+      await refresh()
     },
     [refresh, repo],
   )
 
   const clearAll = useCallback(async () => {
-    try {
-      await repo.clearAll()
-      setAll([])
-      setError(null)
-    } catch (cause) {
-      setError(errorMessage(cause))
-      throw cause
-    }
+    await repo.clearAll()
+    setAll([])
+    setError(null)
   }, [repo])
 
   const exportAll = useCallback(async () => {
-    try {
-      return await repo.exportAll()
-    } catch (cause) {
-      setError(errorMessage(cause))
-      throw cause
-    }
+    return await repo.exportAll()
   }, [repo])
 
   const importMerge = useCallback(
     async (raw: unknown) => {
-      try {
-        setAll(await repo.importMerge(raw))
-        setError(null)
-      } catch (cause) {
-        setError(errorMessage(cause))
-        throw cause
-      }
+      setAll(await repo.importMerge(raw))
+      setError(null)
     },
     [repo],
   )

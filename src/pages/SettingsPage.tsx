@@ -48,7 +48,7 @@ export function SettingsPage() {
       </header>
       {error ? (
         <p role="alert" style={styles.error}>
-          无法访问本地存储：{error}
+          无法访问本地存储，请检查浏览器设置后重试。
         </p>
       ) : (
         <SettingsPanel
