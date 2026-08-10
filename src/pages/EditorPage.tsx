@@ -88,10 +88,11 @@ export function EditorPage() {
           onSubmit={async (input) => {
             if (editing && id) {
               await update(id, input)
+              navigate('/')
             } else {
-              await create(input)
+              const created = await create(input)
+              navigate('/', { state: { focusCaseId: created.id } })
             }
-            navigate('/')
           }}
           onDelete={
             editing && id

@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { CaseDetail } from '../components/CaseDetail'
 import { CardWheel } from '../components/CardWheel'
 import { EmptyGuideCard } from '../components/EmptyGuideCard'
@@ -91,8 +91,10 @@ const styles: Record<string, CSSProperties> = {
 }
 
 export function HomePage() {
+  const location = useLocation()
   const [selectedCase, setSelectedCase] = useState<Case | null>(null)
   const { cases, allCount, keyword, setKeyword, loading } = useCases()
+  const navigationState = location.state as { focusCaseId?: string } | null
 
   const isSearching = keyword.trim().length > 0
   const showEmptyLibrary = !loading && allCount === 0
@@ -118,7 +120,11 @@ export function HomePage() {
         ) : showNoResults ? (
           <EmptyGuideCard variant="no-results" />
         ) : (
-          <CardWheel cases={cases} onSelect={setSelectedCase} />
+          <CardWheel
+            cases={cases}
+            onSelect={setSelectedCase}
+            focusCaseId={navigationState?.focusCaseId}
+          />
         )}
       </div>
 

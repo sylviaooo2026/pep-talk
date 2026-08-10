@@ -1,11 +1,23 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryCaseRepository } from '../data/memoryCaseRepository'
 import { RepoProvider } from '../data/repoContext'
 import type { Case } from '../domain/types'
 import { EditorPage } from './EditorPage'
+
+function CaseListRoute() {
+  const location = useLocation()
+  const state = location.state as { focusCaseId?: string } | null
+
+  return (
+    <>
+      <p>案例列表</p>
+      <output aria-label="聚焦案例">{state?.focusCaseId ?? ''}</output>
+    </>
+  )
+}
 
 function renderEditor(path: string, repo: MemoryCaseRepository) {
   return render(
@@ -14,7 +26,7 @@ function renderEditor(path: string, repo: MemoryCaseRepository) {
         <Routes>
           <Route path="/new" element={<EditorPage />} />
           <Route path="/edit/:id" element={<EditorPage />} />
-          <Route path="/" element={<p>案例列表</p>} />
+          <Route path="/" element={<CaseListRoute />} />
         </Routes>
       </MemoryRouter>
     </RepoProvider>,
@@ -49,6 +61,7 @@ describe('EditorPage', () => {
       body: '我先写提纲，再练习了三遍。',
       tags: ['演讲', '勇气', '复盘'],
     })
+    expect(screen.getByLabelText('聚焦案例')).toHaveTextContent(cases[0].id)
   })
 
   it('loads and updates an existing case', async () => {

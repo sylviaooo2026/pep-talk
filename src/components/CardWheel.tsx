@@ -5,6 +5,7 @@ import { CaseCard } from './CaseCard'
 export type CardWheelProps = {
   cases: Case[]
   onSelect: (item: Case) => void
+  focusCaseId?: string
 }
 
 const VISIBLE_RADIUS = 2
@@ -39,7 +40,6 @@ const styles: Record<string, CSSProperties> = {
     top: '50dvh',
     left: '50%',
     pointerEvents: 'auto',
-    transition: 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease',
     willChange: 'transform, opacity',
   },
 }
@@ -62,14 +62,26 @@ function neighborStyle(distance: number): CSSProperties {
   }
 }
 
-export function CardWheel({ cases, onSelect }: CardWheelProps) {
+export function CardWheel({ cases, onSelect, focusCaseId }: CardWheelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const spacerRefs = useRef<Array<HTMLDivElement | null>>([])
+  const focusedCaseRef = useRef<string | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
     setActiveIndex((prev) => Math.min(prev, Math.max(cases.length - 1, 0)))
   }, [cases.length])
+
+  useEffect(() => {
+    if (!focusCaseId || focusedCaseRef.current === focusCaseId) return
+
+    const index = cases.findIndex((item) => item.id === focusCaseId)
+    if (index < 0) return
+
+    focusedCaseRef.current = focusCaseId
+    setActiveIndex(index)
+    spacerRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [cases, focusCaseId])
 
   useEffect(() => {
     const root = containerRef.current
@@ -114,7 +126,11 @@ export function CardWheel({ cases, onSelect }: CardWheelProps) {
           if (Math.abs(distance) > VISIBLE_RADIUS) return null
           const active = distance === 0
           return (
-            <div key={item.id} style={{ ...styles.cardSlot, ...neighborStyle(distance) }}>
+            <div
+              key={item.id}
+              className="card-wheel-slot"
+              style={{ ...styles.cardSlot, ...neighborStyle(distance) }}
+            >
               <CaseCard
                 case={item}
                 active={active}
@@ -131,6 +147,7 @@ export function CardWheel({ cases, onSelect }: CardWheelProps) {
             spacerRefs.current[index] = el
           }}
           data-index={index}
+          data-case-id={item.id}
           style={styles.spacer}
         />
       ))}

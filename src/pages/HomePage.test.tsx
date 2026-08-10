@@ -20,10 +20,12 @@ class FakeIntersectionObserver implements IntersectionObserver {
   }
 }
 
-function renderHome(repo: MemoryCaseRepository) {
+const scrollIntoView = vi.fn()
+
+function renderHome(repo: MemoryCaseRepository, focusCaseId?: string) {
   return render(
     <RepoProvider repo={repo}>
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { focusCaseId } }]}>
         <HomePage />
       </MemoryRouter>
     </RepoProvider>,
@@ -45,6 +47,11 @@ function makeCase(overrides: Partial<Case>): Case {
 describe('HomePage', () => {
   beforeEach(() => {
     vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver)
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+    scrollIntoView.mockClear()
   })
 
   afterEach(() => {
@@ -65,6 +72,19 @@ describe('HomePage', () => {
     expect(screen.getByRole('link', { name: '设置' })).toHaveAttribute('href', '/settings')
     expect(screen.getByRole('link', { name: '记录新的成功案例' })).toHaveAttribute('href', '/new')
     expect(await screen.findByText('焦虑 for 明天演讲')).toBeInTheDocument()
+  })
+
+  it('focuses a newly created case requested by navigation state', async () => {
+    renderHome(
+      new MemoryCaseRepository([
+        makeCase({ id: 'older', title: '较早的案例', occurredOn: '2026-08-08' }),
+        makeCase({ id: 'newest', title: '刚刚创建的案例', occurredOn: '2026-08-10' }),
+      ]),
+      'newest',
+    )
+
+    expect(await screen.findByText('刚刚创建的案例')).toBeInTheDocument()
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
   })
 
   it('shows the no-results guide when a keyword matches nothing', async () => {
