@@ -76,6 +76,8 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           placeholder="搜索标题、内容或标签"
           aria-label="搜索案例"
           style={styles.input}
+          tabIndex={open ? 0 : -1}
+          aria-hidden={open ? undefined : true}
         />
       </div>
       <button

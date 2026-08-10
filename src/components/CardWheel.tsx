@@ -7,24 +7,38 @@ export type CardWheelProps = {
   onSelect: (item: Case) => void
 }
 
+const VISIBLE_RADIUS = 2
+const CARD_STEP_REM = 7.2
+const TILT_DEG = 52
+
 const styles: Record<string, CSSProperties> = {
   wheel: {
     position: 'absolute',
     inset: 0,
     overflowY: 'auto',
     scrollSnapType: 'y mandatory',
-    perspective: '1200px',
     WebkitOverflowScrolling: 'touch',
   },
-  slide: {
+  // Drives scroll distance/snap points only — stays invisible, one "page" per case.
+  spacer: {
     height: '100dvh',
     scrollSnapAlign: 'center',
     scrollSnapStop: 'always',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  cardWrap: {
+  // Pinned via position: sticky so the 3D stack renders at a fixed spot in the
+  // viewport while the spacers underneath drive which index is "active". This
+  // keeps neighbor cards visible at rest instead of a full viewport away.
+  stage: {
+    position: 'sticky',
+    top: 0,
+    perspective: '1200px',
+    pointerEvents: 'none',
+  },
+  cardSlot: {
+    position: 'absolute',
+    top: '50dvh',
+    left: '50%',
+    pointerEvents: 'auto',
     transition: 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease',
     willChange: 'transform, opacity',
   },
@@ -32,23 +46,25 @@ const styles: Record<string, CSSProperties> = {
 
 function neighborStyle(distance: number): CSSProperties {
   if (distance === 0) {
-    return { transform: 'none', opacity: 1, zIndex: 3 }
+    return { transform: 'translate(-50%, -50%)', opacity: 1, zIndex: 3 }
   }
-  const abs = Math.min(Math.abs(distance), 2)
-  const angle = distance < 0 ? 50 : -50
-  const scale = 1 - abs * 0.08
+  const abs = Math.min(Math.abs(distance), VISIBLE_RADIUS)
+  const sign = distance < 0 ? -1 : 1
+  const scale = 1 - abs * 0.1
   const opacity = Math.max(1 - abs * 0.42, 0.16)
+  const offsetRem = sign * abs * CARD_STEP_REM
+  const angle = distance < 0 ? TILT_DEG : -TILT_DEG
   return {
-    transform: `rotateX(${angle}deg) scale(${scale})`,
+    transform: `translate(-50%, -50%) translateY(${offsetRem}rem) rotateX(${angle}deg) scale(${scale})`,
     transformOrigin: distance < 0 ? 'bottom center' : 'top center',
     opacity,
-    zIndex: 2 - Math.min(abs, 1),
+    zIndex: 2 - abs,
   }
 }
 
 export function CardWheel({ cases, onSelect }: CardWheelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const slideRefs = useRef<Array<HTMLDivElement | null>>([])
+  const spacerRefs = useRef<Array<HTMLDivElement | null>>([])
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
@@ -79,40 +95,45 @@ export function CardWheel({ cases, onSelect }: CardWheelProps) {
       { root, threshold: [0, 0.25, 0.5, 0.75, 1] },
     )
 
-    for (const slide of slideRefs.current) {
-      if (slide) observer.observe(slide)
+    for (const spacer of spacerRefs.current) {
+      if (spacer) observer.observe(spacer)
     }
 
     return () => observer.disconnect()
   }, [cases])
 
   function goTo(index: number) {
-    slideRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    spacerRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   return (
     <div ref={containerRef} style={styles.wheel}>
-      {cases.map((item, index) => {
-        const active = index === activeIndex
-        return (
-          <div
-            key={item.id}
-            ref={(el) => {
-              slideRefs.current[index] = el
-            }}
-            data-index={index}
-            style={styles.slide}
-          >
-            <div style={{ ...styles.cardWrap, ...neighborStyle(index - activeIndex) }}>
+      <div style={styles.stage}>
+        {cases.map((item, index) => {
+          const distance = index - activeIndex
+          if (Math.abs(distance) > VISIBLE_RADIUS) return null
+          const active = distance === 0
+          return (
+            <div key={item.id} style={{ ...styles.cardSlot, ...neighborStyle(distance) }}>
               <CaseCard
                 case={item}
                 active={active}
                 onSelect={() => (active ? onSelect(item) : goTo(index))}
               />
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+      {cases.map((item, index) => (
+        <div
+          key={item.id}
+          ref={(el) => {
+            spacerRefs.current[index] = el
+          }}
+          data-index={index}
+          style={styles.spacer}
+        />
+      ))}
     </div>
   )
 }
