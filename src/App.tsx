@@ -1,10 +1,18 @@
-function App() {
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { EditorPage } from './pages/EditorPage'
+import { HomePage } from './pages/HomePage'
+import { SettingsPage } from './pages/SettingsPage'
+
+export default function App() {
   return (
-    <main>
-      <h1>pep talk</h1>
-      <p>Your personal library of success stories.</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/new" element={<EditorPage />} />
+        <Route path="/edit/:id" element={<EditorPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App
