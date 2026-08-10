@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -94,5 +94,33 @@ describe('HomePage', () => {
 
     expect(await screen.findByText('平静 for 深夜复盘')).toBeInTheDocument()
     expect(screen.queryByText('焦虑 for 明天演讲')).not.toBeInTheDocument()
+  })
+
+  it('opens a case detail overlay and closes it without navigating', async () => {
+    const user = userEvent.setup()
+    renderHome(
+      new MemoryCaseRepository([
+        makeCase({
+          id: 'detail-case',
+          body: '完整记录：我先写提纲，再练习了三遍。',
+          tags: ['演讲', '准备'],
+        }),
+      ]),
+    )
+
+    await user.click(await screen.findByRole('button', { name: /焦虑 for 明天演讲/ }))
+
+    const dialog = screen.getByRole('dialog', { name: '焦虑 for 明天演讲' })
+    expect(within(dialog).getByText('2026-08-09')).toBeInTheDocument()
+    expect(within(dialog).getByText('完整记录：我先写提纲，再练习了三遍。')).toBeInTheDocument()
+    expect(within(dialog).getByText('#演讲')).toBeInTheDocument()
+    expect(within(dialog).getByText('#准备')).toBeInTheDocument()
+    expect(within(dialog).getByRole('link', { name: '编辑' })).toHaveAttribute(
+      'href',
+      '/edit/detail-case',
+    )
+
+    await user.click(within(dialog).getByRole('button', { name: '关闭' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

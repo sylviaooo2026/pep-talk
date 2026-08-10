@@ -1,8 +1,10 @@
-import type { CSSProperties } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, type CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
+import { CaseDetail } from '../components/CaseDetail'
 import { CardWheel } from '../components/CardWheel'
 import { EmptyGuideCard } from '../components/EmptyGuideCard'
 import { SearchBar } from '../components/SearchBar'
+import type { Case } from '../domain/types'
 import { useCases } from '../hooks/useCases'
 
 const styles: Record<string, CSSProperties> = {
@@ -89,7 +91,7 @@ const styles: Record<string, CSSProperties> = {
 }
 
 export function HomePage() {
-  const navigate = useNavigate()
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null)
   const { cases, allCount, keyword, setKeyword, loading } = useCases()
 
   const isSearching = keyword.trim().length > 0
@@ -116,13 +118,17 @@ export function HomePage() {
         ) : showNoResults ? (
           <EmptyGuideCard variant="no-results" />
         ) : (
-          <CardWheel cases={cases} onSelect={(item) => navigate(`/edit/${item.id}`)} />
+          <CardWheel cases={cases} onSelect={setSelectedCase} />
         )}
       </div>
 
       <Link to="/new" style={styles.fab} aria-label="记录新的成功案例">
         +
       </Link>
+
+      {selectedCase && (
+        <CaseDetail case={selectedCase} onClose={() => setSelectedCase(null)} />
+      )}
     </div>
   )
 }
