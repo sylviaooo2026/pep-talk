@@ -48,6 +48,22 @@ export function EditorPage() {
   const editing = Boolean(id)
   const existing = editing ? cases.find((item) => item.id === id) : undefined
 
+  if (error) {
+    return (
+      <main style={styles.page}>
+        <div style={styles.card}>
+          <h1 style={styles.heading}>暂时无法记录案例</h1>
+          <p role="alert" style={styles.error}>
+            无法访问本地存储，请检查浏览器设置后重试。
+          </p>
+          <Link to="/" style={styles.back}>
+            返回案例列表
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
   if (editing && loading) {
     return (
       <main style={styles.page}>

@@ -17,6 +17,12 @@ const existingCase: Case = {
   updatedAt: '2026-08-09T00:00:00.000Z',
 }
 
+class UnavailableRepository extends MemoryCaseRepository {
+  override async list(): Promise<Case[]> {
+    throw new Error('IndexedDB unavailable')
+  }
+}
+
 function renderSettings(repo = new MemoryCaseRepository([existingCase])) {
   return {
     repo,
@@ -57,7 +63,10 @@ describe('SettingsPage', () => {
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => undefined)
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        expect(document.body).toContainElement(this)
+        expect(revokeObjectURL).not.toHaveBeenCalled()
+      })
 
     renderSettings()
     await user.click(screen.getByRole('button', { name: '导出备份' }))
@@ -67,7 +76,7 @@ describe('SettingsPage', () => {
     const anchor = click.mock.instances[0] as HTMLAnchorElement
     expect(anchor.download).toMatch(/^pep-talk-backup-\d{8}\.json$/)
     expect(anchor.href).toBe('blob:backup')
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:backup')
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:backup'))
   })
 
   it('merge-imports a JSON backup and reports success', async () => {
@@ -101,6 +110,27 @@ describe('SettingsPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('不支持的备份版本')
     expect(await repo.list()).toEqual([existingCase])
+  })
+
+  it('wraps malformed JSON errors in Chinese', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+    const file = new File(['{not-json'], 'bad.json', {
+      type: 'application/json',
+    })
+
+    await user.upload(screen.getByLabelText('导入备份'), file)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('备份文件无效')
+  })
+
+  it('blocks storage actions when the repository cannot be opened', async () => {
+    renderSettings(new UnavailableRepository())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('无法访问本地存储')
+    expect(screen.queryByRole('button', { name: '导出备份' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('导入备份')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '清空全部案例' })).not.toBeInTheDocument()
   })
 
   it('only enables clearing for the exact confirmation word, then goes home', async () => {

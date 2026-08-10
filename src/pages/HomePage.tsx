@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CaseDetail } from '../components/CaseDetail'
 import { CardWheel } from '../components/CardWheel'
@@ -93,12 +93,39 @@ const styles: Record<string, CSSProperties> = {
 export function HomePage() {
   const location = useLocation()
   const [selectedCase, setSelectedCase] = useState<Case | null>(null)
-  const { cases, allCount, keyword, setKeyword, loading } = useCases()
+  const detailHistoryPushedRef = useRef(false)
+  const { cases, allCount, keyword, setKeyword, loading, error } = useCases()
   const navigationState = location.state as { focusCaseId?: string } | null
 
   const isSearching = keyword.trim().length > 0
   const showEmptyLibrary = !loading && allCount === 0
   const showNoResults = !loading && !showEmptyLibrary && isSearching && cases.length === 0
+
+  useEffect(() => {
+    function handlePopState() {
+      if (!detailHistoryPushedRef.current) return
+      detailHistoryPushedRef.current = false
+      setSelectedCase(null)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const openDetail = useCallback((item: Case) => {
+    const currentState =
+      window.history.state && typeof window.history.state === 'object' ? window.history.state : {}
+    window.history.pushState({ ...currentState, pepTalkDetail: true }, '')
+    detailHistoryPushedRef.current = true
+    setSelectedCase(item)
+  }, [])
+
+  const closeDetail = useCallback(() => {
+    setSelectedCase(null)
+    if (!detailHistoryPushedRef.current) return
+    detailHistoryPushedRef.current = false
+    window.history.back()
+  }, [])
 
   return (
     <div style={styles.page}>
@@ -115,6 +142,10 @@ export function HomePage() {
       <div style={styles.stage}>
         {loading ? (
           <p style={styles.status}>正在加载…</p>
+        ) : error ? (
+          <p role="alert" style={styles.status}>
+            无法访问本地存储，请检查浏览器设置后重试。
+          </p>
         ) : showEmptyLibrary ? (
           <EmptyGuideCard variant="empty" />
         ) : showNoResults ? (
@@ -122,19 +153,19 @@ export function HomePage() {
         ) : (
           <CardWheel
             cases={cases}
-            onSelect={setSelectedCase}
+            onSelect={openDetail}
             focusCaseId={navigationState?.focusCaseId}
           />
         )}
       </div>
 
-      <Link to="/new" style={styles.fab} aria-label="记录新的成功案例">
-        +
-      </Link>
-
-      {selectedCase && (
-        <CaseDetail case={selectedCase} onClose={() => setSelectedCase(null)} />
+      {!error && (
+        <Link to="/new" style={styles.fab} aria-label="记录新的成功案例">
+          +
+        </Link>
       )}
+
+      {selectedCase && <CaseDetail case={selectedCase} onClose={closeDetail} />}
     </div>
   )
 }

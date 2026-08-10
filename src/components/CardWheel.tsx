@@ -9,8 +9,12 @@ export type CardWheelProps = {
 }
 
 const VISIBLE_RADIUS = 2
-const CARD_STEP_REM = 7.2
-const TILT_DEG = 52
+// Card is `min-height: 13.5rem` (see CaseCard), so its half-height is ~6.75rem.
+// The step must clear that half-height (plus a visible peek margin) so neighbor
+// cards are not fully covered by the focused card's footprint before rotation
+// even pulls their far edge back toward the vanishing point.
+const CARD_STEP_REM = 9.75
+const TILT_DEG = 38
 
 const styles: Record<string, CSSProperties> = {
   wheel: {
@@ -56,7 +60,7 @@ function neighborStyle(distance: number): CSSProperties {
   const angle = distance < 0 ? TILT_DEG : -TILT_DEG
   return {
     transform: `translate(-50%, -50%) translateY(${offsetRem}rem) rotateX(${angle}deg) scale(${scale})`,
-    transformOrigin: distance < 0 ? 'bottom center' : 'top center',
+    transformOrigin: 'center center',
     opacity,
     zIndex: 2 - abs,
   }

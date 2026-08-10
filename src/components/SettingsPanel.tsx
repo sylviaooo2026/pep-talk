@@ -133,8 +133,10 @@ export function SettingsPanel({
       const anchor = document.createElement('a')
       anchor.href = url
       anchor.download = `pep-talk-backup-${todayYmd().replaceAll('-', '')}.json`
+      document.body.append(anchor)
       anchor.click()
-      URL.revokeObjectURL(url)
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 0)
     } catch (cause) {
       setError(errorMessage(cause))
     } finally {
@@ -149,7 +151,13 @@ export function SettingsPanel({
     setBusy(true)
     setError(null)
     try {
-      const raw = JSON.parse(await readFile(file))
+      let raw: unknown
+      try {
+        raw = JSON.parse(await readFile(file))
+      } catch (cause) {
+        if (cause instanceof SyntaxError) throw new Error('备份文件无效')
+        throw cause
+      }
       await importMerge(raw)
       window.alert('导入成功')
     } catch (cause) {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -17,6 +17,12 @@ class FakeIntersectionObserver implements IntersectionObserver {
   disconnect() {}
   takeRecords(): IntersectionObserverEntry[] {
     return []
+  }
+}
+
+class UnavailableRepository extends MemoryCaseRepository {
+  override async list(): Promise<Case[]> {
+    throw new Error('IndexedDB unavailable')
   }
 }
 
@@ -74,6 +80,16 @@ describe('HomePage', () => {
     expect(await screen.findByText('焦虑 for 明天演讲')).toBeInTheDocument()
   })
 
+  it('blocks create actions when storage cannot be opened', async () => {
+    renderHome(new UnavailableRepository())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '无法访问本地存储，请检查浏览器设置后重试。',
+    )
+    expect(screen.queryByRole('link', { name: '记录新的成功案例' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '开始记录' })).not.toBeInTheDocument()
+  })
+
   it('focuses a newly created case requested by navigation state', async () => {
     renderHome(
       new MemoryCaseRepository([
@@ -85,6 +101,35 @@ describe('HomePage', () => {
 
     expect(await screen.findByText('刚刚创建的案例')).toBeInTheDocument()
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+  })
+
+  it('positions tilted neighbors to peek above and below the focused card', async () => {
+    renderHome(
+      new MemoryCaseRepository([
+        makeCase({ id: 'above', title: '上方案例', occurredOn: '2026-08-08' }),
+        makeCase({ id: 'focused', title: '聚焦案例', occurredOn: '2026-08-09' }),
+        makeCase({ id: 'below', title: '下方案例', occurredOn: '2026-08-10' }),
+      ]),
+      'focused',
+    )
+
+    const focused = await screen.findByText('聚焦案例')
+    const slots = Array.from(document.querySelectorAll<HTMLElement>('.card-wheel-slot'))
+    expect(slots).toHaveLength(3)
+    await waitFor(() =>
+      expect(focused.closest('.card-wheel-slot')).toHaveStyle({ opacity: '1' }),
+    )
+
+    const tiltedSlots = slots.filter((slot) => slot.style.transform.includes('rotateX'))
+    expect(tiltedSlots).toHaveLength(2)
+    for (const slot of tiltedSlots) {
+      expect(slot.style.transformOrigin).toBe('center center')
+    }
+
+    // 13.5rem card, 9.75rem center step, 38° tilt, and 0.9 scale:
+    // the far edge reaches ~14.54rem from center, past the focused edge at 6.75rem.
+    const projectedHalfHeight = 6.75 * Math.cos((38 * Math.PI) / 180) * 0.9
+    expect(9.75 + projectedHalfHeight).toBeGreaterThan(6.75)
   })
 
   it('shows the no-results guide when a keyword matches nothing', async () => {
@@ -118,6 +163,8 @@ describe('HomePage', () => {
 
   it('opens a case detail overlay and closes it without navigating', async () => {
     const user = userEvent.setup()
+    const pushState = vi.spyOn(window.history, 'pushState')
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined)
     renderHome(
       new MemoryCaseRepository([
         makeCase({
@@ -130,6 +177,7 @@ describe('HomePage', () => {
 
     await user.click(await screen.findByRole('button', { name: /焦虑 for 明天演讲/ }))
 
+    expect(pushState).toHaveBeenCalled()
     const dialog = screen.getByRole('dialog', { name: '焦虑 for 明天演讲' })
     expect(within(dialog).getByText('2026-08-09')).toBeInTheDocument()
     expect(within(dialog).getByText('完整记录：我先写提纲，再练习了三遍。')).toBeInTheDocument()
@@ -141,6 +189,19 @@ describe('HomePage', () => {
     )
 
     await user.click(within(dialog).getByRole('button', { name: '关闭' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(back).toHaveBeenCalledOnce()
+  })
+
+  it('closes the detail overlay when browser history goes back', async () => {
+    const user = userEvent.setup()
+    renderHome(new MemoryCaseRepository([makeCase({ id: 'detail-case' })]))
+
+    await user.click(await screen.findByRole('button', { name: /焦虑 for 明天演讲/ }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    act(() => window.dispatchEvent(new PopStateEvent('popstate')))
+
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

@@ -7,6 +7,12 @@ import { RepoProvider } from '../data/repoContext'
 import type { Case } from '../domain/types'
 import { EditorPage } from './EditorPage'
 
+class UnavailableRepository extends MemoryCaseRepository {
+  override async list(): Promise<Case[]> {
+    throw new Error('IndexedDB unavailable')
+  }
+}
+
 function CaseListRoute() {
   const location = useLocation()
   const state = location.state as { focusCaseId?: string } | null
@@ -50,7 +56,7 @@ describe('EditorPage', () => {
 
     await user.type(screen.getByLabelText('标题'), '焦虑 for 明天演讲')
     await user.type(screen.getByLabelText('案例内容'), '我先写提纲，再练习了三遍。')
-    await user.type(screen.getByLabelText('标签'), '演讲, 勇气， 复盘 ')
+    await user.type(screen.getByLabelText('标签'), '演讲, 勇气，演讲, 复盘 ')
     await user.click(screen.getByRole('button', { name: '保存案例' }))
 
     expect(await screen.findByText('案例列表')).toBeInTheDocument()
@@ -62,6 +68,15 @@ describe('EditorPage', () => {
       tags: ['演讲', '勇气', '复盘'],
     })
     expect(screen.getByLabelText('聚焦案例')).toHaveTextContent(cases[0].id)
+  })
+
+  it('blocks the new-case form when storage is unavailable', async () => {
+    renderEditor('/new', new UnavailableRepository())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '无法访问本地存储，请检查浏览器设置后重试。',
+    )
+    expect(screen.queryByRole('button', { name: '保存案例' })).not.toBeInTheDocument()
   })
 
   it('loads and updates an existing case', async () => {

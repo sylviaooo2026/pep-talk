@@ -25,11 +25,18 @@ const styles: Record<string, CSSProperties> = {
     color: 'var(--brand)',
     fontSize: '2rem',
   },
+  error: {
+    padding: '1rem',
+    border: '1px solid var(--danger)',
+    borderRadius: 'var(--radius-card)',
+    color: 'var(--danger)',
+    background: 'var(--card)',
+  },
 }
 
 export function SettingsPage() {
   const navigate = useNavigate()
-  const { allCount, exportAll, importMerge, clearAll } = useCases()
+  const { allCount, error, exportAll, importMerge, clearAll } = useCases()
 
   return (
     <main style={styles.page}>
@@ -39,13 +46,19 @@ export function SettingsPage() {
         </Link>
         <h1 style={styles.title}>设置</h1>
       </header>
-      <SettingsPanel
-        allCount={allCount}
-        exportAll={exportAll}
-        importMerge={importMerge}
-        clearAll={clearAll}
-        onClearComplete={() => navigate('/')}
-      />
+      {error ? (
+        <p role="alert" style={styles.error}>
+          无法访问本地存储：{error}
+        </p>
+      ) : (
+        <SettingsPanel
+          allCount={allCount}
+          exportAll={exportAll}
+          importMerge={importMerge}
+          clearAll={clearAll}
+          onClearComplete={() => navigate('/')}
+        />
+      )}
     </main>
   )
 }

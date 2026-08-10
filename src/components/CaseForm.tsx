@@ -75,10 +75,7 @@ const styles: Record<string, CSSProperties> = {
 }
 
 function parseTags(value: string): string[] {
-  return value
-    .split(/[,，]/)
-    .map((tag) => tag.trim())
-    .filter(Boolean)
+  return [...new Set(value.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean))]
 }
 
 export function CaseForm({ initial, submitLabel, onSubmit, onDelete }: CaseFormProps) {
