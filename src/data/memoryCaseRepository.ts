@@ -11,6 +11,10 @@ function cloneCase(item: Case): Case {
 export class MemoryCaseRepository implements CaseRepository {
   private readonly cases = new Map<string, Case>()
 
+  constructor(initialCases: Case[] = []) {
+    for (const item of initialCases) this.cases.set(item.id, cloneCase(item))
+  }
+
   async list(): Promise<Case[]> {
     return [...this.cases.values()].map(cloneCase)
   }
