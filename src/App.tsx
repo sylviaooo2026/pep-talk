@@ -1,7 +1,7 @@
 function App() {
   return (
     <main>
-      <h1>Pep Talk</h1>
+      <h1>pep talk</h1>
       <p>Your personal library of success stories.</p>
     </main>
   )
