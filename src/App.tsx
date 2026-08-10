@@ -4,8 +4,10 @@ import { HomePage } from './pages/HomePage'
 import { SettingsPage } from './pages/SettingsPage'
 
 export default function App() {
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename || undefined}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/new" element={<EditorPage />} />
