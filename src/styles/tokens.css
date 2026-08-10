@@ -10,7 +10,9 @@
   --accent: #2f6f8f;
   --danger: #b42318;
   --shadow: 0 10px 24px rgba(45, 74, 90, 0.18);
-  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  /* Rounded vintage-poster display for brand lockup only */
+  --font-brand: 'Lilita One', 'Arial Rounded MT Bold', 'Arial Black', sans-serif;
+  --font-display: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', sans-serif;
   --font-body: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', sans-serif;
   --radius-card: 16px;
   font-synthesis: none;

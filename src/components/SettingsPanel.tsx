@@ -183,7 +183,7 @@ export function SettingsPanel({
   return (
     <div style={styles.stack}>
       <section style={styles.card}>
-        <h2 style={styles.heading}>关于 pep talk</h2>
+        <h2 style={styles.heading}>关于 PEP TALK</h2>
         <p style={styles.copy}>
           记录你的成功案例。下一次那种感觉来时，它们会告诉你：你曾经成功过。
         </p>

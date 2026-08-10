@@ -74,7 +74,7 @@ describe('HomePage', () => {
   it('renders the brand, gear link, and FAB alongside the wheel', async () => {
     renderHome(new MemoryCaseRepository([makeCase({})]))
 
-    expect(await screen.findByText('pep talk')).toBeInTheDocument()
+    expect(await screen.findByText('PEP TALK')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '设置' })).toHaveAttribute('href', '/settings')
     expect(screen.getByRole('link', { name: '记录新的成功案例' })).toHaveAttribute('href', '/new')
     expect(await screen.findByText('焦虑 for 明天演讲')).toBeInTheDocument()

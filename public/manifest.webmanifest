@@ -1,6 +1,6 @@
 {
-  "name": "pep talk",
-  "short_name": "pep talk",
+  "name": "PEP TALK",
+  "short_name": "PEP TALK",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
