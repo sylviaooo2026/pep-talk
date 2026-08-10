@@ -1,5 +1,4 @@
-import '@fontsource/fraunces/600.css'
-import '@fontsource/fraunces/700.css'
+import '@fontsource/lilita-one/400.css'
 import '@fontsource/source-sans-3/400.css'
 import '@fontsource/source-sans-3/600.css'
 import { StrictMode } from 'react'

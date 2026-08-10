@@ -30,13 +30,15 @@ const styles: Record<string, CSSProperties> = {
   },
   brand: {
     margin: 0,
-    fontFamily: 'var(--font-display)',
-    fontWeight: 700,
-    fontSize: 'clamp(2.4rem, 11vw, 3.6rem)',
-    lineHeight: 1.05,
+    fontFamily: 'var(--font-brand)',
+    fontWeight: 400,
+    fontSize: 'clamp(2.6rem, 12vw, 4rem)',
+    lineHeight: 0.95,
     color: 'var(--brand)',
-    letterSpacing: '-0.01em',
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
     pointerEvents: 'auto',
+    textShadow: '2px 3px 0 rgba(47, 111, 143, 0.12)',
   },
   actions: {
     display: 'flex',
@@ -130,7 +132,7 @@ export function HomePage() {
   return (
     <div style={styles.page}>
       <header style={styles.topbar}>
-        <h1 style={styles.brand}>pep talk</h1>
+        <h1 style={styles.brand}>PEP TALK</h1>
         <div style={styles.actions}>
           <SearchBar value={keyword} onChange={setKeyword} />
           <Link to="/settings" style={styles.gear} aria-label="设置">
