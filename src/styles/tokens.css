@@ -1,0 +1,18 @@
+:root {
+  --bg0: #d5e3ea;
+  --bg1: #edf3f6;
+  --bg2: #f7fafb;
+  --ink: #1c3340;
+  --ink-muted: #5a7382;
+  --card: #ffffff;
+  --line: #d0dde5;
+  --brand: #3d5a6c;
+  --accent: #2f6f8f;
+  --danger: #b42318;
+  --shadow: 0 10px 24px rgba(45, 74, 90, 0.18);
+  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --font-body: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', sans-serif;
+  --radius-card: 16px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
